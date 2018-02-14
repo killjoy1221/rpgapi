@@ -1,23 +1,32 @@
 package mnm.plugins.rpg.api.ability;
 
-import mnm.plugins.rpg.api.ItemRepresentable;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataSerializable;
-import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.util.ResettableBuilder;
 
-public interface Ability extends ItemRepresentable, DataSerializable {
+public interface Ability extends DataSerializable {
 
     AbilityType getType();
 
     int getLevel();
 
-    void setLevel(int level);
+    int getCooldown();
 
-    static Ability of(AbilityType type, ItemStackSnapshot item) {
+    int getManaCost();
+
+    int getStaminaCost();
+
+    static Ability of(AbilityType type, int level) {
         return builder()
                 .type(type)
-                .itemIcon(item)
+                .level(level)
+                .build();
+    }
+
+    static Ability levelUp(Ability ability) {
+        return builder()
+                .from(ability)
+                .level(ability.getLevel() + 1)
                 .build();
     }
 
@@ -31,7 +40,11 @@ public interface Ability extends ItemRepresentable, DataSerializable {
 
         Builder level(int level);
 
-        Builder itemIcon(ItemStackSnapshot item);
+        Builder cooldown(int cooldown);
+
+        Builder mana(int manaCost);
+
+        Builder stamina(int staminaCost);
 
         Ability build();
     }

@@ -2,7 +2,6 @@ package mnm.plugins.rpg.api.ability;
 
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataSerializable;
-import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.util.Identifiable;
 import org.spongepowered.api.util.ResettableBuilder;
 
@@ -11,8 +10,8 @@ import java.util.UUID;
 
 public interface ClassProfile extends Identifiable, DataSerializable {
 
-    static ClassProfile of(String name, ClassType type, User user) {
-        return builder().name(name).type(type).build(user);
+    static ClassProfile of(String name, ClassType type) {
+        return builder().name(name).type(type).build();
     }
 
     static Builder builder() {
@@ -41,6 +40,14 @@ public interface ClassProfile extends Identifiable, DataSerializable {
     int getPoints();
 
     void setPoints(int points);
+
+    int getStamina();
+
+    void setStamina(int stamina);
+
+    int getMana();
+
+    void setMana(int mana);
 
     interface Builder extends ResettableBuilder<ClassProfile, Builder> {
 

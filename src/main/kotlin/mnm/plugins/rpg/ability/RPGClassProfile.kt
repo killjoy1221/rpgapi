@@ -1,6 +1,5 @@
 package mnm.plugins.rpg.ability
 
-import mnm.plugins.rpg.*
 import mnm.plugins.rpg.api.ability.Ability
 import mnm.plugins.rpg.api.ability.AbilityType
 import mnm.plugins.rpg.api.ability.ClassProfile
@@ -10,7 +9,7 @@ import org.spongepowered.api.data.DataQuery
 import org.spongepowered.api.data.DataView
 import org.spongepowered.api.data.Queries
 import org.spongepowered.api.data.persistence.AbstractDataBuilder
-import org.spongepowered.api.entity.living.player.User
+import mnm.plugins.rpg.*
 import java.util.*
 
 data class RPGClassProfile(
@@ -23,13 +22,17 @@ data class RPGClassProfile(
 
     private var level: Int = 1
     private var points: Int = 0
+    private var stamina: Int = 0
+    private var mana: Int = 0
 
     override fun getName() = name
     override fun getUniqueId() = uniqueId
     override fun getClassType() = classType
     override fun getAbilities() = abilities.values.toSet()
     override fun getLevel() = level
-    override fun getPoints() = this.points
+    override fun getPoints() = points
+    override fun getStamina() = stamina
+    override fun getMana() = mana
 
     override fun remove(ability: AbilityType) {
         abilities -= ability
@@ -45,6 +48,14 @@ data class RPGClassProfile(
 
     override fun setPoints(points: Int) {
         this.points = points
+    }
+
+    override fun setStamina(stamina: Int) {
+        this.stamina = stamina
+    }
+
+    override fun setMana(mana: Int) {
+        this.mana = mana
     }
 
     override fun getContentVersion() = 1
@@ -99,7 +110,7 @@ class ClassProfileBuilder : ClassProfile.Builder {
     private var level = 1
     private var points = 0
 
-    override fun uniqueId(uniqueId: UUID?) = this.apply {
+    override fun uniqueId(uniqueId: UUID) = this.apply {
         this.uniqueId = uniqueId
     }
 
@@ -137,7 +148,6 @@ class ClassProfileBuilder : ClassProfile.Builder {
         level = 1
         points = 0
     }
-
 
     override fun from(value: ClassProfile) = this.apply {
         this.name = value.name

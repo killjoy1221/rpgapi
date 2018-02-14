@@ -11,7 +11,7 @@ public interface LevelEvent extends Event, Cancellable {
 
     int getPreviousLevel();
 
-    @PropertySettings(requiredParameter = false, generateMethods = false)
+    @PropertySettings(requiredParameter = false)
     int getOriginalLevel();
 
     int getLevel();

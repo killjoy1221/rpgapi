@@ -5,7 +5,6 @@ import mnm.plugins.rpg.ability.*
 import mnm.plugins.rpg.ability.data.AbilityManipulatorBuilder
 import mnm.plugins.rpg.ability.data.AbilityUserData
 import mnm.plugins.rpg.api.ability.Ability
-import mnm.plugins.rpg.api.ability.AbilityService
 import mnm.plugins.rpg.api.ability.ClassProfile
 import mnm.plugins.rpg.api.ability.ClassType
 import mnm.plugins.rpg.api.ability.data.AbilityProfileData
@@ -50,8 +49,20 @@ class RPGPlugin
         private val container: PluginContainer,
         private val logger: Logger) {
 
-    val partyService get() = sponge.serviceManager<PartyService>()!!
-    val abilityService get() = sponge.serviceManager<AbilityService>()!!
+    companion object {
+        val PARTY_PREFIX = TextColors.LIGHT_PURPLE + "[Party] "
+
+        lateinit var INSTANCE: RPGPlugin
+            private set
+    }
+
+    private val partyService get() = sponge.serviceManager<PartyService>()!!
+
+    lateinit var abilityManager: AbilityManager
+
+    init {
+        INSTANCE = this
+    }
 
     @Listener
     fun registerBuilders(event: GamePreInitializationEvent) {
@@ -79,19 +90,20 @@ class RPGPlugin
                 .dataName("RPG Ability")
                 .buildAndRegister(container)
 
-        sponge.registry.registerBuilderSupplier(Ability.Builder::class.java) { AbilityBuilder() }
-        sponge.registry.registerBuilderSupplier(ClassProfile.Builder::class.java) { ClassProfileBuilder() }
+        sponge.registry.registerBuilderSupplier(Ability.Builder::class.java, ::AbilityBuilder)
+        sponge.registry.registerBuilderSupplier(ClassProfile.Builder::class.java, ::ClassProfileBuilder)
 
         sponge.registry.registerModule(ClassType::class.java, ClassTypeModule())
 
-    }
-
-    @Listener
-    fun registerServices(event: GameInitializationEvent) {
         sponge.serviceManager.setProvider(this, PartyService::class.java, RPGPartyService())
     }
 
-    val partyPrefix = TextColors.LIGHT_PURPLE + "[Party] "
+    @Listener
+    fun init(event: GameInitializationEvent) {
+        sponge.eventManager.registerListeners(this, EffectAbilityType)
+
+        abilityManager = AbilityManager(this)
+    }
 
     // TODO this goes in separate plugin
     @Listener
@@ -110,7 +122,7 @@ class RPGPlugin
                                 it.add(src)
                                 logger.info("{} created a new party ({})", src.name, it.uniqueId)
                             }
-                            src.sendMessage(partyPrefix + "Created new party")
+                            src.sendMessage(PARTY_PREFIX + "Created new party")
                             CommandResult.success()
                         }
                         .build(), "create")
@@ -131,7 +143,7 @@ class RPGPlugin
                             }
 
                             party.add(src)
-                            src.sendMessage(partyPrefix + "You have joined a party with (${party.users.size}): " + party.users.joinToString(", ") { it.name })
+                            src.sendMessage(PARTY_PREFIX + "You have joined a party with (${party.users.size}): " + party.users.joinToString(", ") { it.name })
 
                             src.offer(data.invite().setTo(null))
 
@@ -148,10 +160,10 @@ class RPGPlugin
                             val invite = data.invite().get().unwrap
                                     ?: throw CommandException(Text.of("You have not been invite to a party"))
 
-                            partyService[invite].unwrap?.channel?.send(partyPrefix + src.name + " has denied the party invite.")
+                            partyService[invite].unwrap?.channel?.send(PARTY_PREFIX + src.name + " has denied the party invite.")
 
                             src.offer(data.invite().setTo(null))
-                            src.sendMessage(partyPrefix + "The party invite was denied")
+                            src.sendMessage(PARTY_PREFIX + "The party invite was denied")
 
                             CommandResult.success()
                         }
@@ -187,11 +199,11 @@ class RPGPlugin
                             }
 
                             user.offer(partyData.invite().setTo(party.uniqueId.takeIf { cancelled }))
-                            user.player.unwrap?.sendMessage(partyPrefix + "You have been ${un}invited to a party by ${src.name}." +
+                            user.player.unwrap?.sendMessage(PARTY_PREFIX + "You have been ${un}invited to a party by ${src.name}." +
                                     // if not cancelled, display how to accept
                                     "To join, type /party accept".takeIf { cancelled }.orEmpty()
                             )
-                            party.channel.send(partyPrefix + "${src.name} has ${un}invited ${user.name} to the party")
+                            party.channel.send(PARTY_PREFIX + "${src.name} has ${un}invited ${user.name} to the party")
                             CommandResult.success()
 
                         }
@@ -204,7 +216,7 @@ class RPGPlugin
                             val p = sponge.serviceManager<PartyService>()!![src].unwrap
                                     ?: throw CommandException(Text.of("You are not in a party"))
                             p.remove(src)
-                            src.sendMessage(partyPrefix + "You have left the party.")
+                            src.sendMessage(PARTY_PREFIX + "You have left the party.")
                             CommandResult.success()
 
 
@@ -228,7 +240,7 @@ class RPGPlugin
                                         }.build()
                                     })
 
-                            src.sendMessage(partyPrefix + (TextColors.YELLOW + "Party Members: ") + users)
+                            src.sendMessage(PARTY_PREFIX + (TextColors.YELLOW + "Party Members: ") + users)
 
                             CommandResult.success()
                         }
